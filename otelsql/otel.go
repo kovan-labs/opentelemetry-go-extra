@@ -18,6 +18,7 @@ import (
 const instrumName = "github.com/uptrace/opentelemetry-go-extra/otelsql"
 
 var dbRowsAffected = attribute.Key("db.rows_affected")
+var dbStatementArgs = attribute.Key("db.statement.args")
 
 type config struct {
 	tracerProvider trace.TracerProvider
@@ -29,6 +30,8 @@ type config struct {
 	attrs []attribute.KeyValue
 
 	queryFormatter func(query string) string
+
+	emitArgs bool
 }
 
 func newConfig(opts []Option) *config {
@@ -167,6 +170,13 @@ func WithMeterProvider(meterProvider metric.MeterProvider) Option {
 func WithQueryFormatter(queryFormatter func(query string) string) Option {
 	return func(c *config) {
 		c.queryFormatter = queryFormatter
+	}
+}
+
+// WithEmitArgs configures whether to emit db.statement arguments.
+func WithEmitArgs(emitArgs bool) Option {
+	return func(c *config) {
+		c.emitArgs = emitArgs
 	}
 }
 

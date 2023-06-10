@@ -72,6 +72,9 @@ func (s *otelStmt) createExecCtxFunc(stmt driver.Stmt) stmtExecCtxFunc {
 					if err == nil {
 						span.SetAttributes(dbRowsAffected.Int64(rows))
 					}
+					if s.instrum.emitArgs && len(args) > 0 {
+						span.SetAttributes(dbStatementArgs.String(formatArgs(args)))
+					}
 				}
 
 				return nil
@@ -113,7 +116,17 @@ func (s *otelStmt) createQueryCtxFunc(stmt driver.Stmt) stmtQueryCtxFunc {
 			func(ctx context.Context, span trace.Span) error {
 				var err error
 				rows, err = fn(ctx, args)
-				return err
+				if err != nil {
+					return err
+				}
+
+				if span.IsRecording() {
+					if s.instrum.emitArgs && len(args) > 0 {
+						span.SetAttributes(dbStatementArgs.String(formatArgs(args)))
+					}
+				}
+
+				return nil
 			})
 		return rows, err
 	}
